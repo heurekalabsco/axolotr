@@ -48,25 +48,25 @@ Here are some examples of how to use `axolotr`:
 library(axolotr)
 
 # Using OpenAI's GPT model
-gpt_response <- ask(
+gpt_response <- axolotr::ask(
   prompt = "What are the main differences between R and Python?",
   model = "gpt"
 )
 
 # Using Google's Gemini model
-gemini_response <- ask(
+gemini_response <- axolotr::ask(
   prompt = "Explain the concept of machine learning in simple terms.",
   model = "gemini"
 )
 
 # Using Anthropic's Claude model
-claude_response <- ask(
+claude_response <- axolotr::ask(
   prompt = "Summarize the key points of the theory of relativity.",
-  model = "claude-3-5-sonnet-20240620"
+  model = "sonnet"
 )
 
 # Using Groq's API with a specific model
-groq_response <- ask(
+groq_response <- axolotr::ask(
   prompt = "What are the potential applications of quantum computing?",
   model = "mixtral-8x7b-32768"
 )
@@ -101,10 +101,9 @@ Claude models, to the `ask` function:
 
 ## TODO
 
-- … doesn’t do anything. Add ability to pass addiitonal model-specific
+- … isn’t set up yet. Add ability to pass addiitonal model-specific
   parameters to the API calls.
 - Make cute axolotl hex sticker
-- Write tests
 
 ## Contributing
 

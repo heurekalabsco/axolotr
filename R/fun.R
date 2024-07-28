@@ -67,8 +67,7 @@ ask_anthropic <- function(prompt,
     "anthropic" = "claude-3-5-sonnet-20240620",
     "haiku" = "claude-3-haiku-20240307",
     "sonnet" = "claude-3-5-sonnet-20240620",
-    "opus" = "claude-3-opus-20240229",
-
+    "opus" = "claude-3-opus-20240229"
   )
 
   # Resolve the model name if it's a generic name
@@ -379,7 +378,7 @@ ask_openai <- function(prompt,
                        system = NULL,
                        model = "gpt",
                        temperature = 0.7,
-                       max_tokens = NULL,
+                       max_tokens = 4096,
                        ...) {
   tryCatch({
     # Validate API key
@@ -392,7 +391,7 @@ ask_openai <- function(prompt,
       "gpt" = "gpt-4o",
       "openai" = "gpt-4o",
       "gpt-3" = "gpt-3.5-turbo",
-      "gpt-4" = "gpt-4o",
+      "gpt-4" = "gpt-4o"
     )
 
     # Resolve the model name if it's a generic name
@@ -469,7 +468,7 @@ ask_openai <- function(prompt,
 #'
 #' @param prompt A character string containing the user's message to the GPT model.
 #' @param model A character string containing the GPT model to use.
-#' @param image_size Default is "1792x1024" (but square is faster).
+#' @param image_size Default is "1024x1024" (but 1792 is banner).
 #' @param image_style A character string containing the style to use (vivid or natural).
 #' @param output Default is url.
 #'
@@ -480,7 +479,7 @@ ask_openai <- function(prompt,
 #' @export
 imagine_openai <- function(prompt,
                            model = "dall-e-3",
-                           image_size = "1792x1024",
+                           image_size = "1024x1024",
                            image_style = "vivid",
                            output = "url") {
   tryCatch(

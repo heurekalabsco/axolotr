@@ -1,7 +1,7 @@
 Package: axolotr
 Type: Package
 Title: Unified Interface for Multiple Language Model APIs
-Version: 0.1.02
+Version: 0.1.03
 Authors@R: c(
     person(given = "Matthew",
            family = "Hirschey",
@@ -21,5 +21,7 @@ Imports:
     jsonlite,
     glue
 Suggests:
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    curl,
+    mockery
 Config/testthat/edition: 3

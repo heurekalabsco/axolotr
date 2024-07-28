@@ -7,7 +7,7 @@
 imagine_openai(
   prompt,
   model = "dall-e-3",
-  image_size = "1792x1024",
+  image_size = "1024x1024",
   image_style = "vivid",
   output = "url"
 )
@@ -17,7 +17,7 @@ imagine_openai(
 
 \item{model}{A character string containing the GPT model to use.}
 
-\item{image_size}{Default is "1792x1024" (but square is faster).}
+\item{image_size}{Default is "1024x1024" (but 1792 is banner).}
 
 \item{image_style}{A character string containing the style to use (vivid or natural).}
 
