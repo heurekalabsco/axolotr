@@ -22,7 +22,7 @@ ask <- function(prompt,
     prompt_output <- ask_google(prompt = prompt, system = system, model = model, ...)
   } else if (stringr::str_detect(model, "llama|mixtral|groq")) {
     prompt_output <- ask_groq(prompt = prompt, system = system, model = model, ...)
-  } else if (stringr::str_detect(model, "claude|anthropic")) {
+  } else if (stringr::str_detect(model, "claude|anthropic|haiku|sonnet|opus")) {
     prompt_output <- ask_anthropic(prompt = prompt, system = system, model = model, ...)
   } else {
     stop("Invalid model. Please provide a valid model or API name.")
@@ -63,11 +63,12 @@ ask_anthropic <- function(prompt,
 
   # Define model mapping for generic names
   model_mapping <- list(
-    "claude" = "claude-3-haiku-20240307",
-    "anthropic" = "claude-3-haiku-20240307",
-    "claude-3" = "claude-3-haiku-20240307",
-    "claude-3-opus" = "claude-3-opus-20240229",
-    "claude-3-sonnet" = "claude-3-5-sonnet-20240620"
+    "claude" = "claude-3-5-sonnet-20240620",
+    "anthropic" = "claude-3-5-sonnet-20240620",
+    "haiku" = "claude-3-haiku-20240307",
+    "sonnet" = "claude-3-5-sonnet-20240620",
+    "opus" = "claude-3-opus-20240229",
+
   )
 
   # Resolve the model name if it's a generic name
@@ -280,7 +281,7 @@ ask_groq <- function(prompt,
   model_mapping <- list(
     "groq" = "mixtral-8x7b-32768",
     "mixtral" = "mixtral-8x7b-32768",
-    "llama" = "llama2-70b-4096"
+    "llama" = "llama3-70b-8192"
   )
 
   # Resolve the model name if it's a generic name
@@ -388,10 +389,10 @@ ask_openai <- function(prompt,
 
     # Define model mapping for generic names
     model_mapping <- list(
-      "gpt" = "gpt-3.5-turbo",
-      "openai" = "gpt-3.5-turbo",
+      "gpt" = "gpt-4o",
+      "openai" = "gpt-4o",
       "gpt-3" = "gpt-3.5-turbo",
-      "gpt-4" = "gpt-4-1106-preview"
+      "gpt-4" = "gpt-4o",
     )
 
     # Resolve the model name if it's a generic name
