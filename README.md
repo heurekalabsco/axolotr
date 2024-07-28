@@ -31,10 +31,10 @@ by adding them to your `.Renviron` file:
 library(axolotr)
 
 create_credentials(
-  OPENAI_API_KEY = "your_openai_key",
-  GOOGLE_GEMINI_API_KEY = "your_google_key",
-  ANTHROPIC_API_KEY = "your_anthropic_key",
-  GROQ_API_KEY = "your_groq_key"
+OPENAI_API_KEY = "your_openai_key",
+GOOGLE_GEMINI_API_KEY = "your_google_key",
+ANTHROPIC_API_KEY = "your_anthropic_key",
+GROQ_API_KEY = "your_groq_key"
 )
 ```
 
@@ -42,7 +42,7 @@ Remember to restart your R session after setting up the credentials.
 
 ## Usage
 
-Here are some examples of how to use axolotr:
+Here are some examples of how to use `axolotr`:
 
 ``` r
 library(axolotr)
@@ -72,6 +72,26 @@ groq_response <- ask(
 )
 ```
 
+## Additional Arguments
+
+Pass additional arguments, such as the common pre_fill argument for
+Claude models, to the `ask` function:
+
+``` r
+> ask(
+  prompt = "Continue this sentence: The quick brown fox",
+  model = "claude",
+  temperature = 0.7)
+[1] "The quick brown fox jumped over the lazy dog."
+
+> ask(
+  prompt = "Continue this sentence: The quick brown fox",
+  model = "claude",
+  pre_fill = "jumps over",
+  temperature = 0.7)
+[1] " the lazy dog."
+```
+
 ## Features
 
 - Unified interface for multiple LLM APIs
@@ -84,6 +104,7 @@ groq_response <- ask(
 - … doesn’t do anything. Add ability to pass addiitonal model-specific
   parameters to the API calls.
 - Make cute axolotl hex sticker
+- Write tests
 
 ## Contributing
 

@@ -8,7 +8,7 @@
 #' @param model A character string specifying the model or API to use.
 #'              Can be a general API name (e.g., "anthropic", "google", "openai", "groq")
 #'              or a specific model version (e.g., "gpt-4", "claude-3-opus-20240229").
-#' @param ... Additional arguments passed to the specific API functions.
+#' @param ... Additional arguments passed to the specific API functions, including parameters like pre_fill, temperature, etc.
 #' @return A character string containing the response from the chosen API.
 #'
 #' @export
@@ -40,12 +40,13 @@ ask <- function(prompt,
 #' @param model A character string specifying the model to use. Can be generic ("claude", "anthropic") or specific (e.g., "claude-3-opus-20240229").
 #' @param temperature A numeric value representing the temperature parameter for the API call. Default is 0.
 #' @param max_tokens An integer specifying the maximum number of tokens in the response. Default is 4096.
+#' @param pre_fill An optional character string to pre-fill the model's response. Default is NULL.
 #' @param ... Additional parameters to pass to the Anthropic API.
 #'
 #' @return The generated text response from the Claude API, or NULL if an error occurs.
-#'
 #' @importFrom httr POST add_headers content
 #' @importFrom jsonlite toJSON
+#' @importFrom glue glue
 #'
 #' @export
 ask_anthropic <- function(prompt,
@@ -53,6 +54,7 @@ ask_anthropic <- function(prompt,
                           model = "claude",
                           temperature = 0,
                           max_tokens = 4096,
+                          pre_fill = NULL,
                           ...) {
   # Validate API key
   if (Sys.getenv("ANTHROPIC_API_KEY") == "") {
@@ -65,7 +67,7 @@ ask_anthropic <- function(prompt,
     "anthropic" = "claude-3-haiku-20240307",
     "claude-3" = "claude-3-haiku-20240307",
     "claude-3-opus" = "claude-3-opus-20240229",
-    "claude-3-sonnet" = "claude-3-sonnet-20240229"
+    "claude-3-sonnet" = "claude-3-5-sonnet-20240620"
   )
 
   # Resolve the model name if it's a generic name
@@ -89,7 +91,9 @@ ask_anthropic <- function(prompt,
 
     # Set system content if not provided
     if (is.null(system)) {
-      system <- "Communicate in a clear, specific, and professional manner, using language appropriate for the task. Tailor your writing style and content to the specific document type and requirements provided by the user. If you are unsure about a specific request or lack the necessary information, politely inform the user and request additional details."
+      system <- glue::glue("Communicate in a clear, specific, and professional manner, using language appropriate for the task.
+                           Tailor your writing style and content to the specific document type and requirements provided by the user.
+                           If you are unsure about a specific request or lack the necessary information, politely inform the user and request additional details.")
     }
 
     # Prepare the request body
@@ -103,28 +107,57 @@ ask_anthropic <- function(prompt,
           role = "user",
           content = prompt
         )
-      )
+      ),
+      ...
     )
+
+    # Add pre-fill content if provided
+    if (!is.null(pre_fill)) {
+      body$messages <- c(
+        body$messages,
+        list(list(
+          role = "assistant",
+          content = pre_fill
+        ))
+      )
+    }
 
     # Remove NULL elements from the body
     body <- body[!sapply(body, is.null)]
 
     # Make the API call
     response <- httr::POST(url = url, config = headers, body = jsonlite::toJSON(body, auto_unbox = TRUE))
+
+    # Check for HTTP errors
+    if (httr::http_error(response)) {
+      http_status <- httr::http_status(response)
+      stop(
+        sprintf(
+          "HTTP error: %s (Status code: %s)\n%s",
+          http_status$reason,
+          http_status$status_code,
+          httr::content(response, "text", encoding = "UTF-8")
+        )
+      )
+    }
+
+    # Parse the response
     result <- httr::content(response, as = "parsed")
 
-    # Check and handle errors
-    if (httr::http_error(response)) {
-      error_message <- result$error$message
-      stop("Error occurred with Claude API call: ", error_message)
+    # Check for API-level errors
+    if (!is.null(result$error)) {
+      stop(paste("Anthropic API error:", result$error$message))
     }
 
     # Extract and return the text
-    text <- result$content[[1]]$text
-    return(text)
+    if (!is.null(result$content) && length(result$content) > 0 && !is.null(result$content[[1]]$text)) {
+      return(result$content[[1]]$text)
+    } else {
+      stop("Unexpected response format from Anthropic API")
+    }
 
   }, error = function(e) {
-    message("Error occurred with Claude API call: ", e$message)
+    message("Error in Anthropic API call: ", e$message)
     return(NULL)
   })
 }
