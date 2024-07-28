@@ -248,6 +248,116 @@ ask_google <- function(prompt,
   })
 }
 
+#' Call the Groq API to Process a Prompt
+#'
+#' This function uses the Groq API to process a given prompt. It supports various open-source models
+#' available through Groq's API.
+#'
+#' @param prompt A character string containing the user's message to be processed by the Groq API.
+#' @param system An optional character string to provide a system prompt to the model. Default is NULL.
+#' @param model A character string specifying the model to use. Can be generic ("groq", "mixtral", "llama") or specific (e.g., "mixtral-8x7b-32768").
+#' @param temperature A numeric value representing the temperature parameter for the API call. Default is 0.3.
+#' @param max_tokens An integer specifying the maximum number of tokens in the response. Default is 4096.
+#' @param ... Additional parameters to pass to the Groq API.
+#'
+#' @return A character string containing the processed text from the Groq API response. If an error occurs, the function will return NULL.
+#' @importFrom httr POST add_headers content http_status
+#' @importFrom jsonlite toJSON
+#'
+#' @export
+ask_groq <- function(prompt,
+                     system = NULL,
+                     model = "groq",
+                     temperature = 0.3,
+                     max_tokens = 4096,
+                     ...) {
+  # Validate API key
+  if (Sys.getenv("GROQ_API_KEY") == "") {
+    stop("Please set the GROQ_API_KEY environment variable")
+  }
+
+  # Define model mapping for generic names
+  model_mapping <- list(
+    "groq" = "mixtral-8x7b-32768",
+    "mixtral" = "mixtral-8x7b-32768",
+    "llama" = "llama2-70b-4096"
+  )
+
+  # Resolve the model name if it's a generic name
+  if (model %in% names(model_mapping)) {
+    model <- model_mapping[[model]]
+  }
+
+  tryCatch({
+    # Validate input
+    if (!is.character(prompt)) {
+      stop("prompt should be a string!")
+    }
+
+    # Set up the URL and headers
+    url <- "https://api.groq.com/openai/v1/chat/completions"
+    headers <- httr::add_headers(
+      Authorization = paste0("Bearer ", Sys.getenv("GROQ_API_KEY")),
+      "Content-Type" = "application/json"
+    )
+
+    # Set default system message if not provided
+    if (is.null(system)) {
+      system <- "Act as an expert writer. You are specific and concise."
+    }
+
+    # Prepare the request body
+    body <- list(
+      model = model,
+      messages = list(
+        list(role = "system", content = system),
+        list(role = "user", content = prompt)
+      ),
+      temperature = temperature,
+      max_tokens = max_tokens,
+      ...
+    )
+
+    # Remove NULL elements from the body
+    body <- body[!sapply(body, is.null)]
+
+    # Make the API call
+    response <- httr::POST(url = url, config = headers, body = jsonlite::toJSON(body, auto_unbox = TRUE))
+
+    # Check for HTTP errors
+    if (httr::http_error(response)) {
+      http_status <- httr::http_status(response)
+      stop(
+        sprintf(
+          "HTTP error: %s (Status code: %s)\n%s",
+          http_status$reason,
+          http_status$status_code,
+          httr::content(response, "text", encoding = "UTF-8")
+        )
+      )
+    }
+
+    # Parse the response
+    result <- httr::content(response, as = "parsed")
+
+    # Check for API-level errors
+    if (!is.null(result$error)) {
+      stop(paste("Groq API error:", result$error$message))
+    }
+
+    # Extract and return the text
+    if (!is.null(result$choices) && length(result$choices) > 0 && !is.null(result$choices[[1]]$message$content)) {
+      return(result$choices[[1]]$message$content)
+    } else {
+      stop("Unexpected response format from Groq API")
+    }
+
+  }, error = function(e) {
+    message("Error in Groq API call: ", e$message)
+    return(NULL)
+  })
+}
+
 #' Process a Prompt using OpenAI's GPT Models
 #'
 #' This function uses the OpenAI API to communicate with a specified GPT model.
@@ -359,6 +469,7 @@ ask_openai <- function(prompt,
 #' @param prompt A character string containing the user's message to the GPT model.
 #' @param model A character string containing the GPT model to use.
 #' @param image_size Default is "1792x1024" (but square is faster).
+#' @param image_style A character string containing the style to use (vivid or natural).
 #' @param output Default is url.
 #'
 #' @return A character string containing the GPT model's response.

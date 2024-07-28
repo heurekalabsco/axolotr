@@ -10,6 +10,7 @@ ask_anthropic(
   model = "claude",
   temperature = 0,
   max_tokens = 4096,
+  pre_fill = NULL,
   ...
 )
 }
@@ -23,6 +24,8 @@ ask_anthropic(
 \item{temperature}{A numeric value representing the temperature parameter for the API call. Default is 0.}
 
 \item{max_tokens}{An integer specifying the maximum number of tokens in the response. Default is 4096.}
+
+\item{pre_fill}{An optional character string to pre-fill the model's response. Default is NULL.}
 
 \item{...}{Additional parameters to pass to the Anthropic API.}
 }

@@ -15,7 +15,7 @@ ask(prompt, system = NULL, model = "gpt-3.5-turbo", ...)
 Can be a general API name (e.g., "anthropic", "google", "openai", "groq")
 or a specific model version (e.g., "gpt-4", "claude-3-opus-20240229").}
 
-\item{...}{Additional arguments passed to the specific API functions.}
+\item{...}{Additional arguments passed to the specific API functions, including parameters like pre_fill, temperature, etc.}
 }
 \value{
 A character string containing the response from the chosen API.

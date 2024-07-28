@@ -19,6 +19,8 @@ imagine_openai(
 
 \item{image_size}{Default is "1792x1024" (but square is faster).}
 
+\item{image_style}{A character string containing the style to use (vivid or natural).}
+
 \item{output}{Default is url.}
 }
 \value{
