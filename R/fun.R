@@ -14,7 +14,7 @@
 #' @export
 ask <- function(prompt,
                 system = NULL,
-                model = "gpt-3.5-turbo",
+                model = "claude",
                 ...) {
   if (stringr::str_detect(model, "gpt|openai")) {
     prompt_output <- ask_openai(prompt = prompt, system = system, model = model, ...)
