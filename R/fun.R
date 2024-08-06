@@ -151,7 +151,13 @@ ask_anthropic <- function(prompt,
 
     # Extract and return the text
     if (!is.null(result$content) && length(result$content) > 0 && !is.null(result$content[[1]]$text)) {
-      return(result$content[[1]]$text)
+      content <- result$content[[1]]$text
+
+      #add prefill back to content
+      if(!is.null(pre_fill)){
+        content <- glue::glue("{pre_fill}{content}")
+      }
+      return(content)
     } else {
       stop("Unexpected response format from Anthropic API")
     }
