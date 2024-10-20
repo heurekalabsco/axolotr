@@ -1,27 +1,33 @@
 Package: axolotr
 Type: Package
 Title: Unified Interface for Multiple Language Model APIs
-Version: 0.1.03
+Version: 0.1.4
 Authors@R: c(
     person(given = "Matthew",
            family = "Hirschey",
            role = c("aut", "cre"),
            email = "matthew@hirschey.org",
-           comment = c(ORCID = "0000-0003-4541-5376"))
+           comment = c(ORCID = "0000-0003-4541-5376")),
+    person(given = "Pol",
+           family = "Castellano-Escuder",
+           role = c("ctb"),
+           email = "polcaes@gmail.com",
+           comment = c(ORCID = "0000-0001-6466-877X"))
     )
 Maintainer: Matthew Hirschey <matthew@hirschey.org>
 Description: The axolotr package provides a unified interface for interacting with various Language Model APIs, including OpenAI's GPT, Google's Gemini, Anthropic's Claude, and Groq's API. It allows users to easily switch between different LLMs and leverage their capabilities for a wide range of natural language processing tasks.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Imports:
-    stringr,
+    glue,
     httr,
     jsonlite,
-    glue
+    ollamar,
+    stringr
 Suggests:
-    testthat (>= 3.0.0),
     curl,
-    mockery
+    mockery,
+    testthat (>= 3.0.0)
 Config/testthat/edition: 3

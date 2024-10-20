@@ -20,10 +20,13 @@ ask <- function(prompt,
     prompt_output <- ask_openai(prompt = prompt, system = system, model = model, ...)
   } else if (stringr::str_detect(model, "gemini|google")) {
     prompt_output <- ask_google(prompt = prompt, system = system, model = model, ...)
-  } else if (stringr::str_detect(model, "llama|mixtral|groq")) {
+  } else if (stringr::str_detect(model, "llama|mixtral|groq") & !stringr::str_detect(model, "local")) {
     prompt_output <- ask_groq(prompt = prompt, system = system, model = model, ...)
   } else if (stringr::str_detect(model, "claude|anthropic|haiku|sonnet|opus")) {
     prompt_output <- ask_anthropic(prompt = prompt, system = system, model = model, ...)
+  } else if (stringr::str_detect(model, "local_")) {
+    model <- gsub("local_", "", model)
+    prompt_output <- ask_ollama(prompt = prompt, system = system, model = model, ...)
   } else {
     stop("Invalid model. Please provide a valid model or API name.")
   }
@@ -91,9 +94,10 @@ ask_anthropic <- function(prompt,
 
     # Set system content if not provided
     if (is.null(system)) {
-      system <- glue::glue("Communicate in a clear, specific, and professional manner, using language appropriate for the task.
-                           Tailor your writing style and content to the specific document type and requirements provided by the user.
-                           If you are unsure about a specific request or lack the necessary information, politely inform the user and request additional details.")
+      system <- ''
+      # Communicate in a clear, specific, and professional manner, using language appropriate for the task.
+      # Tailor your writing style and content to the specific document type and requirements provided by the user.
+      # If you are unsure about a specific request or lack the necessary information, politely inform the user and request additional details.
     }
 
     # Prepare the request body
@@ -309,7 +313,8 @@ ask_groq <- function(prompt,
 
     # Set default system message if not provided
     if (is.null(system)) {
-      system <- "Act as an expert writer. You are specific and concise."
+      system <- ""
+      # Act as an expert writer. You are specific and concise.
     }
 
     # Prepare the request body
@@ -462,6 +467,39 @@ ask_openai <- function(prompt,
 
   }, error = function(e) {
     message("Error in OpenAI API call: ", e$message)
+    return(NULL)
+  })
+}
+
+#' Process a Prompt using Ollama local server
+#'
+#' This function uses the Ollama local server to communicate with a specified Ollama model.
+#'
+#' @param prompt A character string containing the user's message to the Ollama model.
+#' @param system An optional character string to provide a system prompt to the model. Default is NULL.
+#' @param model A character string containing the Ollama model to use. Must be specific and contain the prefix "local_" ("local_llama3", "local_llama3.1").
+#'
+#' @return A character string containing the Ollama model's response, or NULL if an error occurs.
+#'
+#' @export
+ask_ollama <- function(prompt,
+                       system = NULL,
+                       model = "llama3",
+                       ...) {
+  tryCatch({
+    # Test Ollama local server
+    test_ollama <- ollamar::test_connection()
+    if (test_ollama$status_code != 200) {
+      stop("Please make sure your Ollama server is running")
+    }
+    
+    if (is.null(system)) {
+      system <- ''
+    }
+    response <- ollamar::generate(model = model, prompt = prompt, system = system, output = "text")
+    return(response)
+  }, error = function(e) {
+    message("Error in Ollama call: ", e$message)
     return(NULL)
   })
 }
@@ -620,3 +658,4 @@ create_credentials <- function(path = NULL,
 
   message("Credentials updated successfully. Please restart your R session for changes to take effect.")
 }
+
