@@ -4,7 +4,7 @@
 \alias{ask}
 \title{Process a Prompt using Specified API}
 \usage{
-ask(prompt, system = NULL, model = "claude", ...)
+ask(prompt, system = NULL, model = "claude", max_tokens = 4096, ...)
 }
 \arguments{
 \item{prompt}{A character string containing the user's message.}

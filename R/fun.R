@@ -15,15 +15,16 @@
 ask <- function(prompt,
                 system = NULL,
                 model = "claude",
+                max_tokens = 4096,
                 ...) {
   if (stringr::str_detect(model, "gpt|openai")) {
-    prompt_output <- ask_openai(prompt = prompt, system = system, model = model, ...)
+    prompt_output <- ask_openai(prompt = prompt, system = system, model = model, max_tokens = max_tokens, ...)
   } else if (stringr::str_detect(model, "gemini|google")) {
     prompt_output <- ask_google(prompt = prompt, system = system, model = model, ...)
   } else if (stringr::str_detect(model, "llama|mixtral|groq") & !stringr::str_detect(model, "local")) {
     prompt_output <- ask_groq(prompt = prompt, system = system, model = model, ...)
   } else if (stringr::str_detect(model, "claude|anthropic|haiku|sonnet|opus")) {
-    prompt_output <- ask_anthropic(prompt = prompt, system = system, model = model, ...)
+    prompt_output <- ask_anthropic(prompt = prompt, system = system, model = model, max_tokens = max_tokens, ...)
   } else if (stringr::str_detect(model, "local_")) {
     model <- gsub("local_", "", model)
     prompt_output <- ask_ollama(prompt = prompt, system = system, model = model, ...)
@@ -72,7 +73,7 @@ ask_anthropic <- function(prompt,
     "sonnet" = "claude-3-5-sonnet-20240620",
     "opus" = "claude-3-opus-20240229"
   )
-
+  
   # Resolve the model name if it's a generic name
   if (model %in% names(model_mapping)) {
     model <- model_mapping[[model]]
