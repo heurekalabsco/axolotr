@@ -8,6 +8,7 @@
 #' @param model A character string specifying the model or API to use.
 #'              Can be a general API name (e.g., "anthropic", "google", "openai", "groq")
 #'              or a specific model version (e.g., "gpt-4", "claude-3-opus-20240229").
+#' @param local Logical indicating whether to use a local LLM via Ollama server or not. Default is FALSE.
 #' @param ... Additional arguments passed to the specific API functions, including parameters like pre_fill, temperature, etc.
 #' @return A character string containing the response from the chosen API.
 #'
@@ -15,18 +16,17 @@
 ask <- function(prompt,
                 system = NULL,
                 model = "claude",
-                max_tokens = 4096,
+                local = FALSE,
                 ...) {
   if (stringr::str_detect(model, "gpt|openai")) {
-    prompt_output <- ask_openai(prompt = prompt, system = system, model = model, max_tokens = max_tokens, ...)
+    prompt_output <- ask_openai(prompt = prompt, system = system, model = model, ...)
   } else if (stringr::str_detect(model, "gemini|google")) {
     prompt_output <- ask_google(prompt = prompt, system = system, model = model, ...)
-  } else if (stringr::str_detect(model, "llama|mixtral|groq") & !stringr::str_detect(model, "local")) {
+  } else if (stringr::str_detect(model, "llama|mixtral|groq") & !local) {
     prompt_output <- ask_groq(prompt = prompt, system = system, model = model, ...)
   } else if (stringr::str_detect(model, "claude|anthropic|haiku|sonnet|opus")) {
-    prompt_output <- ask_anthropic(prompt = prompt, system = system, model = model, max_tokens = max_tokens, ...)
-  } else if (stringr::str_detect(model, "local_")) {
-    model <- gsub("local_", "", model)
+    prompt_output <- ask_anthropic(prompt = prompt, system = system, model = model, ...)
+  } else if (stringr::str_detect(model, "llama") & local) {
     prompt_output <- ask_ollama(prompt = prompt, system = system, model = model, ...)
   } else {
     stop("Invalid model. Please provide a valid model or API name.")
