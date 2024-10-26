@@ -67,13 +67,13 @@ ask_anthropic <- function(prompt,
 
   # Define model mapping for generic names
   model_mapping <- list(
-    "claude" = "claude-3-5-sonnet-20240620",
-    "anthropic" = "claude-3-5-sonnet-20240620",
+    "claude" = "claude-3-5-sonnet-latest",
+    "anthropic" = "claude-3-5-sonnet-latest",
     "haiku" = "claude-3-haiku-20240307",
-    "sonnet" = "claude-3-5-sonnet-20240620",
-    "opus" = "claude-3-opus-20240229"
+    "sonnet" = "claude-3-5-sonnet-latest",
+    "opus" = "claude-3-opus-latest"
   )
-  
+
   # Resolve the model name if it's a generic name
   if (model %in% names(model_mapping)) {
     model <- model_mapping[[model]]
@@ -493,7 +493,7 @@ ask_ollama <- function(prompt,
     if (test_ollama$status_code != 200) {
       stop("Please make sure your Ollama server is running")
     }
-    
+
     if (is.null(system)) {
       system <- ''
     }
