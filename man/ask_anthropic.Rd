@@ -23,7 +23,7 @@ ask_anthropic(
 
 \item{temperature}{A numeric value representing the temperature parameter for the API call. Default is 0.}
 
-\item{max_tokens}{An integer specifying the maximum number of tokens in the response. Default is 4096.}
+\item{max_tokens}{An integer specifying the maximum number of tokens in the response. Default is 4096. Max is 8192 tokens.}
 
 \item{pre_fill}{An optional character string to pre-fill the model's response. Default is NULL.}
 

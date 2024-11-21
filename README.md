@@ -101,7 +101,7 @@ Claude models, to the `ask` function:
 
 ## TODO
 
-- … isn’t set up yet. Add ability to pass addiitonal model-specific
+- `...` isn’t set up yet. Add ability to pass additional model-specific
   parameters to the API calls.
 - Make cute axolotl hex sticker
 

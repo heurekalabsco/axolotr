@@ -43,7 +43,7 @@ ask <- function(prompt,
 #' @param system An optional character string to provide a system prompt to the model. Default is NULL.
 #' @param model A character string specifying the model to use. Can be generic ("claude", "anthropic") or specific (e.g., "claude-3-opus-20240229").
 #' @param temperature A numeric value representing the temperature parameter for the API call. Default is 0.
-#' @param max_tokens An integer specifying the maximum number of tokens in the response. Default is 4096.
+#' @param max_tokens An integer specifying the maximum number of tokens in the response. Default is 4096. Max is 8192 tokens.
 #' @param pre_fill An optional character string to pre-fill the model's response. Default is NULL.
 #' @param ... Additional parameters to pass to the Anthropic API.
 #'
@@ -69,7 +69,7 @@ ask_anthropic <- function(prompt,
   model_mapping <- list(
     "claude" = "claude-3-5-sonnet-latest",
     "anthropic" = "claude-3-5-sonnet-latest",
-    "haiku" = "claude-3-haiku-20240307",
+    "haiku" = "claude-3-5-haiku-latest",
     "sonnet" = "claude-3-5-sonnet-latest",
     "opus" = "claude-3-opus-latest"
   )

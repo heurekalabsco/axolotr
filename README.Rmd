@@ -104,7 +104,7 @@ Pass additional arguments, such as the common pre_fill argument for Claude model
 
 ## TODO
 
-- ... isn't set up yet. Add ability to pass addiitonal model-specific parameters to the API calls.
+- `...` isn't set up yet. Add ability to pass additional model-specific parameters to the API calls.
 - Make cute axolotl hex sticker
 
 ## Contributing

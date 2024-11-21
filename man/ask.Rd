@@ -4,7 +4,7 @@
 \alias{ask}
 \title{Process a Prompt using Specified API}
 \usage{
-ask(prompt, system = NULL, model = "claude", max_tokens = 4096, ...)
+ask(prompt, system = NULL, model = "claude", local = FALSE, ...)
 }
 \arguments{
 \item{prompt}{A character string containing the user's message.}
@@ -14,6 +14,8 @@ ask(prompt, system = NULL, model = "claude", max_tokens = 4096, ...)
 \item{model}{A character string specifying the model or API to use.
 Can be a general API name (e.g., "anthropic", "google", "openai", "groq")
 or a specific model version (e.g., "gpt-4", "claude-3-opus-20240229").}
+
+\item{local}{Logical indicating whether to use a local LLM via Ollama server or not. Default is FALSE.}
 
 \item{...}{Additional arguments passed to the specific API functions, including parameters like pre_fill, temperature, etc.}
 }
