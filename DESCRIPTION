@@ -1,7 +1,7 @@
 Package: axolotr
 Type: Package
 Title: Unified Interface for Multiple Language Model APIs
-Version: 0.1.08
+Version: 0.2.01
 Authors@R: c(
     person(given = "Matthew",
            family = "Hirschey",

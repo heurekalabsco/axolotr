@@ -11,17 +11,15 @@ ask(prompt, system = NULL, model = "claude", local = FALSE, ...)
 
 \item{system}{An optional character string containing the system message. Defaults to NULL.}
 
-\item{model}{A character string specifying the model or API to use.
-Can be a general API name (e.g., "anthropic", "google", "openai", "groq")
-or a specific model version (e.g., "gpt-4", "claude-3-opus-20240229").}
+\item{model}{A character string specifying the model or API to use.}
 
 \item{local}{Logical indicating whether to use a local LLM via Ollama server or not. Default is FALSE.}
 
-\item{...}{Additional arguments passed to the specific API functions, including parameters like pre_fill, temperature, etc.}
+\item{...}{Additional arguments passed to the specific API functions.}
 }
 \value{
 A character string containing the response from the chosen API.
 }
 \description{
-This function acts as a wrapper to process a prompt using Anthropic, Google, Groq, or OpenAI's API based on the specified model.
+Process a Prompt using Specified API
 }

@@ -9,7 +9,7 @@
 #'              Can be a general API name (e.g., "anthropic", "google", "openai", "groq")
 #'              or a specific model version (e.g., "gpt-4", "claude-3-opus-20240229").
 #' @param local Logical indicating whether to use a local LLM via Ollama server or not. Default is FALSE.
-#' @param ... Additional arguments passed to the specific API functions, including parameters like pre_fill, temperature, etc.
+#' @param ... Additional arguments passed to the specific API functions.
 #' @return A character string containing the response from the chosen API.
 #'
 #' @export
@@ -25,7 +25,7 @@ ask <- function(prompt,
   } else if (stringr::str_detect(model, "llama|mixtral|groq") & !local) {
     prompt_output <- ask_groq(prompt = prompt, system = system, model = model, ...)
   } else if (stringr::str_detect(model, "claude|anthropic|haiku|sonnet|opus")) {
-    prompt_output <- ask_anthropic(prompt = prompt, system = system, model = model, ...)
+    prompt_output <- ask_anthropic(prompt = prompt, system = system, model = model, cache = cache, ...)
   } else if (stringr::str_detect(model, "llama") & local) {
     prompt_output <- ask_ollama(prompt = prompt, system = system, model = model, ...)
   } else {
@@ -35,17 +35,30 @@ ask <- function(prompt,
 }
 
 #APIs----
-#' Call Anthropic API
+#' Call Anthropic API with Optional Prompt Caching
 #'
 #' This function sends a prompt to the Claude API by Anthropic and returns the generated text response.
+#' It supports prompt caching for improved performance when using consistent background context.
 #'
 #' @param prompt A character string representing the prompt to be sent to the Claude API.
 #' @param system An optional character string to provide a system prompt to the model. Default is NULL.
-#' @param model A character string specifying the model to use. Can be generic ("claude", "anthropic") or specific (e.g., "claude-3-opus-20240229").
-#' @param temperature A numeric value representing the temperature parameter for the API call. Default is 0.
-#' @param max_tokens An integer specifying the maximum number of tokens in the response. Default is 4096. Max is 8192 tokens.
+#' @param model A character string specifying the model to use.
+#' @param temperature A numeric value representing the temperature parameter. Default is 0.
+#' @param max_tokens An integer specifying the maximum number of tokens in the response. Default is 4096.
 #' @param pre_fill An optional character string to pre-fill the model's response. Default is NULL.
+#' @param cache An optional character string containing additional context to be cached. Default is NULL.
+#'        This content will be cached for 5 minutes and can be reused across multiple calls.
+#' @param dev Logical indicating whether to return the full response from the API. Default is FALSE.
 #' @param ... Additional parameters to pass to the Anthropic API.
+#'
+#' @details
+#' The function supports two types of system-level content:
+#' 1. Regular system messages (via the system parameter) which are processed fresh each time
+#' 2. Cached context (via the cache parameter) which is cached for 5 minutes
+#'
+#' Use the cache parameter for large chunks of background information or context that will
+#' be reused across multiple calls. The system parameter should be used for immediate
+#' instructions that may change between calls.
 #'
 #' @return The generated text response from the Claude API, or NULL if an error occurs.
 #' @importFrom httr POST add_headers content
@@ -59,6 +72,8 @@ ask_anthropic <- function(prompt,
                           temperature = 0,
                           max_tokens = 4096,
                           pre_fill = NULL,
+                          cache = NULL,
+                          dev = FALSE,
                           ...) {
   # Validate API key
   if (Sys.getenv("ANTHROPIC_API_KEY") == "") {
@@ -80,9 +95,15 @@ ask_anthropic <- function(prompt,
   }
 
   tryCatch({
-    # Validate input
+    # Validate inputs
     if (!is.character(prompt)) {
       stop("prompt should be a string!")
+    }
+    if (!is.null(system) && !is.character(system)) {
+      stop("system should be a string or NULL!")
+    }
+    if (!is.null(cache) && !is.character(cache)) {
+      stop("cache should be a string or NULL!")
     }
 
     # Set up the URL and headers
@@ -93,12 +114,52 @@ ask_anthropic <- function(prompt,
       "anthropic-version" = "2023-06-01"
     )
 
-    # Set system content if not provided
-    if (is.null(system)) {
-      system <- ''
-      # Communicate in a clear, specific, and professional manner, using language appropriate for the task.
-      # Tailor your writing style and content to the specific document type and requirements provided by the user.
-      # If you are unsure about a specific request or lack the necessary information, politely inform the user and request additional details.
+    # Prepare the system blocks
+    system_blocks <- list()
+
+    # Add regular system message if provided
+    if (!is.null(system)) {
+      system_blocks <- c(system_blocks,
+                         list(list(
+                           type = "text",
+                           text = system
+                         ))
+      )
+    }
+
+    # Add cached content if provided
+    if (!is.null(cache)) {
+      system_blocks <- c(system_blocks,
+                         list(list(
+                           type = "text",
+                           text = cache,
+                           cache_control = list(type = "ephemeral")
+                         ))
+      )
+    }
+
+    # If no system or cache content, provide empty system block
+    if (length(system_blocks) == 0) {
+      system_blocks <- list(list(type = "text", text = "Be concise."))
+    }
+
+    # Prepare the messages content
+    messages_content <- list(
+      list(
+        role = "user",
+        content = prompt
+      )
+    )
+
+    # Add pre-fill content if provided
+    if (!is.null(pre_fill)) {
+      messages_content <- c(
+        messages_content,
+        list(list(
+          role = "assistant",
+          content = pre_fill
+        ))
+      )
     }
 
     # Prepare the request body
@@ -106,26 +167,9 @@ ask_anthropic <- function(prompt,
       model = model,
       max_tokens = max_tokens,
       temperature = temperature,
-      system = system,
-      messages = list(
-        list(
-          role = "user",
-          content = prompt
-        )
-      ),
-      ...
+      system = system_blocks,
+      messages = messages_content
     )
-
-    # Add pre-fill content if provided
-    if (!is.null(pre_fill)) {
-      body$messages <- c(
-        body$messages,
-        list(list(
-          role = "assistant",
-          content = pre_fill
-        ))
-      )
-    }
 
     # Remove NULL elements from the body
     body <- body[!sapply(body, is.null)]
@@ -154,19 +198,22 @@ ask_anthropic <- function(prompt,
       stop(paste("Anthropic API error:", result$error$message))
     }
 
-    # Extract and return the text
-    if (!is.null(result$content) && length(result$content) > 0 && !is.null(result$content[[1]]$text)) {
-      content <- result$content[[1]]$text
-
-      #add prefill back to content
-      if(!is.null(pre_fill)){
-        content <- glue::glue("{pre_fill}{content}")
-      }
-      return(content)
+    if(dev == TRUE){
+      return(result)
     } else {
-      stop("Unexpected response format from Anthropic API")
-    }
+      # Extract and return the text
+      if (!is.null(result$content) && length(result$content) > 0 && !is.null(result$content[[1]]$text)) {
+        content <- result$content[[1]]$text
 
+        # Add prefill back to content
+        if(!is.null(pre_fill)){
+          content <- glue::glue("{pre_fill}{content}")
+        }
+        return(content)
+      } else {
+        stop("Unexpected response format from Anthropic API")
+      }
+    }
   }, error = function(e) {
     message("Error in Anthropic API call: ", e$message)
     return(NULL)

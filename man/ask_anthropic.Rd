@@ -2,7 +2,7 @@
 % Please edit documentation in R/fun.R
 \name{ask_anthropic}
 \alias{ask_anthropic}
-\title{Call Anthropic API}
+\title{Call Anthropic API with Optional Prompt Caching}
 \usage{
 ask_anthropic(
   prompt,
@@ -11,6 +11,8 @@ ask_anthropic(
   temperature = 0,
   max_tokens = 4096,
   pre_fill = NULL,
+  cache = NULL,
+  dev = FALSE,
   ...
 )
 }
@@ -19,13 +21,18 @@ ask_anthropic(
 
 \item{system}{An optional character string to provide a system prompt to the model. Default is NULL.}
 
-\item{model}{A character string specifying the model to use. Can be generic ("claude", "anthropic") or specific (e.g., "claude-3-opus-20240229").}
+\item{model}{A character string specifying the model to use.}
 
-\item{temperature}{A numeric value representing the temperature parameter for the API call. Default is 0.}
+\item{temperature}{A numeric value representing the temperature parameter. Default is 0.}
 
-\item{max_tokens}{An integer specifying the maximum number of tokens in the response. Default is 4096. Max is 8192 tokens.}
+\item{max_tokens}{An integer specifying the maximum number of tokens in the response. Default is 4096.}
 
 \item{pre_fill}{An optional character string to pre-fill the model's response. Default is NULL.}
+
+\item{cache}{An optional character string containing additional context to be cached. Default is NULL.
+This content will be cached for 5 minutes and can be reused across multiple calls.}
+
+\item{dev}{Logical indicating whether to return the full response from the API. Default is FALSE.}
 
 \item{...}{Additional parameters to pass to the Anthropic API.}
 }
@@ -34,4 +41,14 @@ The generated text response from the Claude API, or NULL if an error occurs.
 }
 \description{
 This function sends a prompt to the Claude API by Anthropic and returns the generated text response.
+It supports prompt caching for improved performance when using consistent background context.
+}
+\details{
+The function supports two types of system-level content:
+1. Regular system messages (via the system parameter) which are processed fresh each time
+2. Cached context (via the cache parameter) which is cached for 5 minutes
+
+Use the cache parameter for large chunks of background information or context that will
+be reused across multiple calls. The system parameter should be used for immediate
+instructions that may change between calls.
 }
