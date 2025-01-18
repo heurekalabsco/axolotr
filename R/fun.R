@@ -9,6 +9,7 @@
 #'              Can be a general API name (e.g., "anthropic", "google", "openai", "groq")
 #'              or a specific model version (e.g., "gpt-4", "claude-3-opus-20240229").
 #' @param local Logical indicating whether to use a local LLM via Ollama server or not. Default is FALSE.
+#' @param cache An optional character string containing additional context to be cached (Anthropic only). Default is NULL.
 #' @param ... Additional arguments passed to the specific API functions.
 #' @return A character string containing the response from the chosen API.
 #'
@@ -17,6 +18,7 @@ ask <- function(prompt,
                 system = NULL,
                 model = "claude",
                 local = FALSE,
+                cache = NULL,
                 ...) {
   if (stringr::str_detect(model, "gpt|openai")) {
     prompt_output <- ask_openai(prompt = prompt, system = system, model = model, ...)

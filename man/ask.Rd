@@ -4,16 +4,20 @@
 \alias{ask}
 \title{Process a Prompt using Specified API}
 \usage{
-ask(prompt, system = NULL, model = "claude", local = FALSE, ...)
+ask(prompt, system = NULL, model = "claude", local = FALSE, cache = NULL, ...)
 }
 \arguments{
 \item{prompt}{A character string containing the user's message.}
 
 \item{system}{An optional character string containing the system message. Defaults to NULL.}
 
-\item{model}{A character string specifying the model or API to use.}
+\item{model}{A character string specifying the model or API to use.
+Can be a general API name (e.g., "anthropic", "google", "openai", "groq")
+or a specific model version (e.g., "gpt-4", "claude-3-opus-20240229").}
 
 \item{local}{Logical indicating whether to use a local LLM via Ollama server or not. Default is FALSE.}
+
+\item{cache}{An optional character string containing additional context to be cached (Anthropic only). Default is NULL.}
 
 \item{...}{Additional arguments passed to the specific API functions.}
 }
@@ -21,5 +25,5 @@ ask(prompt, system = NULL, model = "claude", local = FALSE, ...)
 A character string containing the response from the chosen API.
 }
 \description{
-Process a Prompt using Specified API
+This function acts as a wrapper to process a prompt using Anthropic, Google, Groq, or OpenAI's API based on the specified model.
 }
