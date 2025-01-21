@@ -12,6 +12,8 @@ ask_anthropic(
   max_tokens = 4096,
   pre_fill = NULL,
   cache = NULL,
+  pdf_path = NULL,
+  pdf_cache = FALSE,
   dev = FALSE,
   ...
 )
