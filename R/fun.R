@@ -522,37 +522,35 @@ ask_openai <- function(prompt,
 }
 
 #' Process a Prompt using Ollama local server
-#'
+#' 
 #' This function uses the Ollama local server to communicate with a specified Ollama model.
-#'
+#' 
 #' @param prompt A character string containing the user's message to the Ollama model.
 #' @param system An optional character string to provide a system prompt to the model. Default is NULL.
 #' @param model A character string containing the Ollama model to use. Must be specific and contain the prefix "local_" ("local_llama3", "local_llama3.1").
-#'
+#' 
 #' @return A character string containing the Ollama model's response, or NULL if an error occurs.
-#'
-#' @export
-ask_ollama <- function(prompt,
-                       system = NULL,
-                       model = "llama3",
-                       ...) {
-  tryCatch({
-    # Test Ollama local server
-    test_ollama <- ollamar::test_connection()
-    if (test_ollama$status_code != 200) {
-      stop("Please make sure your Ollama server is running")
-    }
-
-    if (is.null(system)) {
-      system <- ''
-    }
-    response <- ollamar::generate(model = model, prompt = prompt, system = system, output = "text")
-    return(response)
-  }, error = function(e) {
-    message("Error in Ollama call: ", e$message)
-    return(NULL)
-  })
-}
+# ask_ollama <- function(prompt,
+#                        system = NULL,
+#                        model = "llama3",
+#                        ...) {
+#   tryCatch({
+#     # Test Ollama local server
+#     test_ollama <- ollamar::test_connection()
+#     if (test_ollama$status_code != 200) {
+#       stop("Please make sure your Ollama server is running")
+#     }
+# 
+#     if (is.null(system)) {
+#       system <- ''
+#     }
+#     response <- ollamar::generate(model = model, prompt = prompt, system = system, output = "text")
+#     return(response)
+#   }, error = function(e) {
+#     message("Error in Ollama call: ", e$message)
+#     return(NULL)
+#   })
+# }
 
 #IMAGE APIs----
 #' Process a Prompt using OpenAI's DallE Models

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fun.R
 \name{imagine_openai}
 \alias{imagine_openai}
-\title{Process a Prompt using OpenAI's DallE Models}
+\title{Process a Prompt using Ollama local server}
 \usage{
 imagine_openai(
   prompt,
@@ -22,11 +22,18 @@ imagine_openai(
 \item{image_style}{A character string containing the style to use (vivid or natural).}
 
 \item{output}{Default is url.}
+
+\item{system}{An optional character string to provide a system prompt to the model. Default is NULL.}
 }
 \value{
+A character string containing the Ollama model's response, or NULL if an error occurs.
+Process a Prompt using OpenAI's DallE Models
+
+This function uses the OpenAI API to interactively communicate with a specified DallE model.
+The default model is DallE3, but it can use DallE2.
+
 A character string containing the GPT model's response.
 }
 \description{
-This function uses the OpenAI API to interactively communicate with a specified DallE model.
-The default model is DallE3, but it can use DallE2.
+This function uses the Ollama local server to communicate with a specified Ollama model.
 }
