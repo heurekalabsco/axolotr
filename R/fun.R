@@ -71,6 +71,8 @@ ask_anthropic <- function(prompt,
                           max_tokens = 4096,
                           pre_fill = NULL,
                           cache = NULL,
+                          pdf_path = NULL,
+                          pdf_cache = FALSE,
                           dev = FALSE,
                           ...) {
   # Validate API key
@@ -141,6 +143,21 @@ ask_anthropic <- function(prompt,
       system_blocks <- list(list(type = "text", text = "Be concise."))
     }
 
+    # Add PDF if provided
+    if (!is.null(pdf_path)) {
+      pdf_data <- encode_pdf(pdf_path)
+      pdf_block <- create_pdf_block(pdf_data, cache = pdf_cache)
+      
+      # Create content blocks
+      prompt <- list(
+        pdf_block,
+        list(
+          type = "text",
+          text = prompt
+        )
+      )
+    }
+
     # Prepare the messages content
     messages_content <- list(
       list(
@@ -148,7 +165,7 @@ ask_anthropic <- function(prompt,
         content = prompt
       )
     )
-
+    
     # Add pre-fill content if provided
     if (!is.null(pre_fill)) {
       messages_content <- c(
