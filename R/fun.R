@@ -8,24 +8,20 @@
 #' @param model A character string specifying the model or API to use.
 #'              Can be a general API name (e.g., "anthropic", "google", "openai", "groq")
 #'              or a specific model version (e.g., "gpt-4", "claude-3-opus-20240229").
-#' @param cache An optional character string containing additional context to be cached (Anthropic only). Default is NULL.
-#' @param ... Additional arguments passed to the specific API functions.
 #' @return A character string containing the response from the chosen API.
 #'
 #' @export
 ask <- function(prompt,
                 system = NULL,
-                model = "claude",
-                cache = NULL,
-                ...) {
+                model = "claude") {
   if (stringr::str_detect(model, "gpt|openai")) {
-    prompt_output <- ask_openai(prompt = prompt, system = system, model = model, ...)
+    prompt_output <- ask_openai(prompt = prompt, system = system, model = model)
   } else if (stringr::str_detect(model, "gemini|google")) {
-    prompt_output <- ask_google(prompt = prompt, system = system, model = model, ...)
+    prompt_output <- ask_google(prompt = prompt, system = system, model = model)
   } else if (stringr::str_detect(model, "llama|mixtral|groq")) {
-    prompt_output <- ask_groq(prompt = prompt, system = system, model = model, ...)
+    prompt_output <- ask_groq(prompt = prompt, system = system, model = model)
   } else if (stringr::str_detect(model, "claude|anthropic|haiku|sonnet|opus")) {
-    prompt_output <- ask_anthropic(prompt = prompt, system = system, model = model, cache = cache, ...)
+    prompt_output <- ask_anthropic(prompt = prompt, system = system, model = model)
   } else {
     stop("Invalid model. Please provide a valid model or API name.")
   }
@@ -44,19 +40,11 @@ ask <- function(prompt,
 #' @param temperature A numeric value representing the temperature parameter. Default is 0.
 #' @param max_tokens An integer specifying the maximum number of tokens in the response. Default is 4096.
 #' @param pre_fill An optional character string to pre-fill the model's response. Default is NULL.
-#' @param cache An optional character string containing additional context to be cached. Default is NULL.
-#'        This content will be cached for 5 minutes and can be reused across multiple calls.
+#' @param pdf_path Optional path to a PDF file.
+#' @param cache_system Logical indicating whether to cache the system prompt. Default is FALSE. This content will be cached for 5 minutes and can be reused across multiple calls.
+#' @param cache_pdf Logical indicating whether to cache the PDF content. Default is FALSE. This content will be cached for 5 minutes and can be reused across multiple calls.
 #' @param dev Logical indicating whether to return the full response from the API. Default is FALSE.
 #' @param ... Additional parameters to pass to the Anthropic API.
-#'
-#' @details
-#' The function supports two types of system-level content:
-#' 1. Regular system messages (via the system parameter) which are processed fresh each time
-#' 2. Cached context (via the cache parameter) which is cached for 5 minutes
-#'
-#' Use the cache parameter for large chunks of background information or context that will
-#' be reused across multiple calls. The system parameter should be used for immediate
-#' instructions that may change between calls.
 #'
 #' @return The generated text response from the Claude API, or NULL if an error occurs.
 #' @importFrom httr POST add_headers content
@@ -70,9 +58,9 @@ ask_anthropic <- function(prompt,
                           temperature = 0,
                           max_tokens = 4096,
                           pre_fill = NULL,
-                          cache = NULL,
                           pdf_path = NULL,
-                          pdf_cache = FALSE,
+                          cache_system = FALSE,
+                          cache_pdf = FALSE,
                           dev = FALSE,
                           ...) {
   # Validate API key
@@ -102,9 +90,6 @@ ask_anthropic <- function(prompt,
     if (!is.null(system) && !is.character(system)) {
       stop("system should be a string or NULL!")
     }
-    if (!is.null(cache) && !is.character(cache)) {
-      stop("cache should be a string or NULL!")
-    }
 
     # Set up the URL and headers
     url <- "https://api.anthropic.com/v1/messages"
@@ -113,40 +98,40 @@ ask_anthropic <- function(prompt,
       "X-API-Key" = Sys.getenv("ANTHROPIC_API_KEY"),
       "anthropic-version" = "2023-06-01"
     )
-
-    # Prepare the system blocks
-    system_blocks <- list()
-
-    # Add regular system message if provided
+    
+    # Define an empty system block
+    system_block <- list()
+    
+    # Add system content if provided
     if (!is.null(system)) {
-      system_blocks <- c(system_blocks,
-                         list(list(
-                           type = "text",
-                           text = system
-                         ))
-      )
+      if (cache_system) {
+        system_block <- c(
+          system_block,
+          list(
+            list(
+              type = "text",
+              text = system,
+              cache_control = list(type = "ephemeral")
+            )
+          )
+        )
+      } else {
+        system_block <- c(
+          system_block,
+          list(
+            list(
+              type = "text",
+              text = system
+            )
+          )
+        )
+      }
     }
-
-    # Add cached content if provided
-    if (!is.null(cache)) {
-      system_blocks <- c(system_blocks,
-                         list(list(
-                           type = "text",
-                           text = cache,
-                           cache_control = list(type = "ephemeral")
-                         ))
-      )
-    }
-
-    # If no system or cache content, provide empty system block
-    if (length(system_blocks) == 0) {
-      system_blocks <- list(list(type = "text", text = "Be concise."))
-    }
-
+    
     # Add PDF if provided
     if (!is.null(pdf_path)) {
       pdf_data <- encode_pdf(pdf_path)
-      pdf_block <- create_pdf_block(pdf_data, cache = pdf_cache)
+      pdf_block <- create_pdf_block(pdf_data, cache = cache_pdf)
       
       # Create content blocks
       prompt <- list(
@@ -182,7 +167,7 @@ ask_anthropic <- function(prompt,
       model = model,
       max_tokens = max_tokens,
       temperature = temperature,
-      system = system_blocks,
+      system = system_block,
       messages = messages_content
     )
 

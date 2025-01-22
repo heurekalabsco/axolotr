@@ -4,7 +4,7 @@
 \alias{ask}
 \title{Process a Prompt using Specified API}
 \usage{
-ask(prompt, system = NULL, model = "claude", cache = NULL, ...)
+ask(prompt, system = NULL, model = "claude")
 }
 \arguments{
 \item{prompt}{A character string containing the user's message.}
@@ -14,10 +14,6 @@ ask(prompt, system = NULL, model = "claude", cache = NULL, ...)
 \item{model}{A character string specifying the model or API to use.
 Can be a general API name (e.g., "anthropic", "google", "openai", "groq")
 or a specific model version (e.g., "gpt-4", "claude-3-opus-20240229").}
-
-\item{cache}{An optional character string containing additional context to be cached (Anthropic only). Default is NULL.}
-
-\item{...}{Additional arguments passed to the specific API functions.}
 }
 \value{
 A character string containing the response from the chosen API.

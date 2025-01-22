@@ -11,9 +11,9 @@ ask_anthropic(
   temperature = 0,
   max_tokens = 4096,
   pre_fill = NULL,
-  cache = NULL,
   pdf_path = NULL,
-  pdf_cache = FALSE,
+  cache_system = FALSE,
+  cache_pdf = FALSE,
   dev = FALSE,
   ...
 )
@@ -31,8 +31,11 @@ ask_anthropic(
 
 \item{pre_fill}{An optional character string to pre-fill the model's response. Default is NULL.}
 
-\item{cache}{An optional character string containing additional context to be cached. Default is NULL.
-This content will be cached for 5 minutes and can be reused across multiple calls.}
+\item{pdf_path}{Optional path to a PDF file.}
+
+\item{cache_system}{Logical indicating whether to cache the system prompt. Default is FALSE. This content will be cached for 5 minutes and can be reused across multiple calls.}
+
+\item{cache_pdf}{Logical indicating whether to cache the PDF content. Default is FALSE. This content will be cached for 5 minutes and can be reused across multiple calls.}
 
 \item{dev}{Logical indicating whether to return the full response from the API. Default is FALSE.}
 
@@ -44,13 +47,4 @@ The generated text response from the Claude API, or NULL if an error occurs.
 \description{
 This function sends a prompt to the Claude API by Anthropic and returns the generated text response.
 It supports prompt caching for improved performance when using consistent background context.
-}
-\details{
-The function supports two types of system-level content:
-1. Regular system messages (via the system parameter) which are processed fresh each time
-2. Cached context (via the cache parameter) which is cached for 5 minutes
-
-Use the cache parameter for large chunks of background information or context that will
-be reused across multiple calls. The system parameter should be used for immediate
-instructions that may change between calls.
 }
