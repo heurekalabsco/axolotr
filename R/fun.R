@@ -98,10 +98,10 @@ ask_anthropic <- function(prompt,
       "X-API-Key" = Sys.getenv("ANTHROPIC_API_KEY"),
       "anthropic-version" = "2023-06-01"
     )
-    
+
     # Define an empty system block
     system_block <- list()
-    
+
     # Add system content if provided
     if (!is.null(system)) {
       if (cache_system) {
@@ -127,12 +127,12 @@ ask_anthropic <- function(prompt,
         )
       }
     }
-    
+
     # Add PDF if provided
     if (!is.null(pdf_path)) {
       pdf_data <- encode_pdf(pdf_path)
       pdf_block <- create_pdf_block(pdf_data, cache = cache_pdf)
-      
+
       # Create content blocks
       prompt <- list(
         pdf_block,
@@ -150,7 +150,7 @@ ask_anthropic <- function(prompt,
         content = prompt
       )
     )
-    
+
     # Add pre-fill content if provided
     if (!is.null(pre_fill)) {
       messages_content <- c(
@@ -181,12 +181,7 @@ ask_anthropic <- function(prompt,
     if (httr::http_error(response)) {
       http_status <- httr::http_status(response)
       stop(
-        sprintf(
-          "HTTP error: %s (Status code: %s)\n%s",
-          http_status$reason,
-          http_status$status_code,
-          httr::content(response, "text", encoding = "UTF-8")
-        )
+        sprintf(http_status$message)
       )
     }
 
@@ -520,13 +515,13 @@ ask_openai <- function(prompt,
 }
 
 #' Process a Prompt using Ollama local server
-#' 
+#'
 #' This function uses the Ollama local server to communicate with a specified Ollama model.
-#' 
+#'
 #' @param prompt A character string containing the user's message to the Ollama model.
 #' @param system An optional character string to provide a system prompt to the model. Default is NULL.
 #' @param model A character string containing the Ollama model to use. Must be specific and contain the prefix "local_" ("local_llama3", "local_llama3.1").
-#' 
+#'
 #' @return A character string containing the Ollama model's response, or NULL if an error occurs.
 # ask_ollama <- function(prompt,
 #                        system = NULL,
@@ -538,7 +533,7 @@ ask_openai <- function(prompt,
 #     if (test_ollama$status_code != 200) {
 #       stop("Please make sure your Ollama server is running")
 #     }
-# 
+#
 #     if (is.null(system)) {
 #       system <- ''
 #     }
