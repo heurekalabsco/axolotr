@@ -1,3 +1,7 @@
+# hexSticker.R
+# This script generates the package hexSticker logo
+# Run this script manually to update the logo in man/figures/logo.png
+
 library(hexSticker)
 library(magick)
 library(showtext)
