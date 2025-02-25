@@ -2,6 +2,11 @@
 #' Process a Prompt using Specified API
 #'
 #' This function acts as a wrapper to process a prompt using Anthropic, Google, Groq, or OpenAI's API based on the specified model.
+#' It provides a simplified, unified interface with only the most common parameters that apply to all supported APIs.
+#'
+#' @note For advanced, model-specific features (like Claude's "thinking" capability, OpenAI's function calling,
+#'       or special document handling), use the model-specific functions directly:
+#'       \code{ask_anthropic()}, \code{ask_google()}, \code{ask_openai()}, or \code{ask_groq()}.
 #'
 #' @param prompt A character string containing the user's message.
 #' @param system An optional character string containing the system message. Defaults to NULL.
@@ -9,6 +14,22 @@
 #'              Can be a general API name (e.g., "anthropic", "google", "openai", "groq")
 #'              or a specific model version (e.g., "gpt-4", "claude-3-opus-20240229").
 #' @return A character string containing the response from the chosen API.
+#'
+#' @examples
+#' \dontrun{
+#' # Basic usage with default model (Claude)
+#' response <- ask("What is machine learning?")
+#'
+#' # Using a specific API
+#' response <- ask("Explain quantum computing", model = "openai")
+#'
+#' # With system message and specific model
+#' response <- ask(
+#'   prompt = "Write a short poem about AI",
+#'   system = "You are a renowned poet with technical knowledge",
+#'   model = "gpt-4"
+#' )
+#' }
 #'
 #' @export
 ask <- function(prompt,
@@ -29,27 +50,65 @@ ask <- function(prompt,
 }
 
 #APIs----
-#' Call Anthropic API with Optional Prompt Caching
+#' Call Anthropic API with Advanced Features Support
 #'
 #' This function sends a prompt to the Claude API by Anthropic and returns the generated text response.
-#' It supports prompt caching for improved performance when using consistent background context.
+#' It provides direct access to Claude-specific features including:
+#'
+#' 1. The "thinking" capability (Claude 3.7 Sonnet models only) for enhanced reasoning
+#' 2. Support for large token outputs (up to 128K tokens with appropriate models)
+#' 3. Prompt caching for improved performance with consistent background context
+#' 4. PDF document handling and integration
+#'
+#' Note: The main wrapper function `ask()` does NOT expose Claude-specific parameters like "thinking".
+#' To use these advanced features, call `ask_anthropic()` directly instead of using the `ask()` wrapper.
 #'
 #' @param prompt A character string representing the prompt to be sent to the Claude API.
 #' @param system An optional character string to provide a system prompt to the model. Default is NULL.
 #' @param model A character string specifying the model to use.
+#'              Can be a generic name (e.g., "claude", "sonnet", "opus", "haiku") or
+#'              a specific model version (e.g., "claude-3-7-sonnet-latest").
 #' @param temperature A numeric value representing the temperature parameter. Default is 0.
-#' @param max_tokens An integer specifying the maximum number of tokens in the response. Default is 4096.
+#' @param max_tokens An integer specifying the maximum number of tokens in the response. Default is 8192.
+#'                   For outputs >64K tokens, requires supporting model and adds appropriate beta header.
+#' @param thinking An optional numeric value specifying the token budget for Claude's thinking capability.
+#'                 Only applicable for Claude 3.7 Sonnet models. Default is NULL.
+#'                 When provided, enables Claude's "reasoning mode" with the specified budget.
+#'                 Must be less than max_tokens.
 #' @param pre_fill An optional character string to pre-fill the model's response. Default is NULL.
 #' @param pdf_path Optional path to a PDF file.
-#' @param cache_system Logical indicating whether to cache the system prompt. Default is FALSE. This content will be cached for 5 minutes and can be reused across multiple calls.
-#' @param cache_pdf Logical indicating whether to cache the PDF content. Default is FALSE. This content will be cached for 5 minutes and can be reused across multiple calls.
-#' @param dev Logical indicating whether to return the full response from the API. Default is FALSE.
+#' @param cache_system Logical indicating whether to cache the system prompt. Default is FALSE.
+#'                     Cached content will be available for 5 minutes and can be reused across multiple calls.
+#' @param cache_pdf Logical indicating whether to cache the PDF content. Default is FALSE.
+#'                  Cached content will be available for 5 minutes and can be reused across multiple calls.
+#' @param dev Logical indicating whether to return the full API response object. Default is FALSE.
 #' @param ... Additional parameters to pass to the Anthropic API.
 #'
 #' @return The generated text response from the Claude API, or NULL if an error occurs.
+#'         If dev=TRUE, returns the complete API response object.
 #' @importFrom httr POST add_headers content
 #' @importFrom jsonlite toJSON
 #' @importFrom glue glue
+#'
+#' @examples
+#' \dontrun{
+#' # Basic usage
+#' response <- ask_anthropic("Explain quantum computing")
+#'
+#' # With system prompt
+#' response <- ask_anthropic(
+#'   prompt = "Write a sonnet about machine learning",
+#'   system = "You are an expert poet with knowledge of computer science"
+#' )
+#'
+#' # Using thinking capability (Claude 3.7 Sonnet only)
+#' response <- ask_anthropic(
+#'   prompt = "Solve this complex math problem step by step...",
+#'   model = "claude-3-7-sonnet-latest",
+#'   thinking = 20000,
+#'   max_tokens = 40000
+#' )
+#' }
 #'
 #' @export
 ask_anthropic <- function(prompt,
@@ -57,6 +116,7 @@ ask_anthropic <- function(prompt,
                           model = "claude",
                           temperature = 0,
                           max_tokens = 8192, #~6.2K words \ 28K unicode characters \ ~12-13 single spaced pages
+                          thinking = NULL,
                           pre_fill = NULL,
                           pdf_path = NULL,
                           cache_system = FALSE,
@@ -87,6 +147,24 @@ ask_anthropic <- function(prompt,
     stop("Maximum tokens for claude-3-opus-latest and claude-3-haiku-latest is 4096. Please set max_tokens to 4096 or lower.")
   }
 
+  # Validate thinking parameter if provided
+  if (!is.null(thinking)) {
+    if (!is.numeric(thinking)) {
+      stop("thinking should be a numeric value representing token budget!")
+    }
+
+    if (thinking >= max_tokens) {
+      stop("thinking budget_tokens must be less than max_tokens!")
+    }
+
+    # Check if the model supports thinking
+    if (!grepl("claude-3-7-sonnet", model)) {
+      stop("The thinking parameter is only supported for Claude 3.7 Sonnet models.")
+    }
+
+    message("In older Claude models (prior to Claude 3.7 Sonnet), if the sum of prompt tokens and `max_tokens` exceeded the model's context window, the system would automatically adjust `max_tokens` to fit within the context limit. This meant you could set a large `max_tokens` value and the system would silently reduce it as needed.\nWith Claude 3.7 Sonnet, `max_tokens` (which includes your thinking budget when thinking is enabled) is enforced as a strict limit. The system will now return a validation error if prompt tokens + `max_tokens` exceeds the context window size.")
+  }
+
   tryCatch({
     # Validate inputs
     if (!is.character(prompt)) {
@@ -98,11 +176,19 @@ ask_anthropic <- function(prompt,
 
     # Set up the URL and headers
     url <- "https://api.anthropic.com/v1/messages"
-    headers <- httr::add_headers(
+    headers <- list(
       "Content-Type" = "application/json",
       "X-API-Key" = Sys.getenv("ANTHROPIC_API_KEY"),
       "anthropic-version" = "2023-06-01"
     )
+
+    # Add beta header for large token outputs if needed
+    if (max_tokens > 64000) {
+      headers[["anthropic-beta"]] <- "output-128k-2025-02-19"
+    }
+
+    # Convert headers to httr format
+    headers <- do.call(httr::add_headers, headers)
 
     # Define an empty system block
     system_block <- list()
@@ -175,6 +261,14 @@ ask_anthropic <- function(prompt,
       system = system_block,
       messages = messages_content
     )
+
+    # Add thinking parameter if provided
+    if (!is.null(thinking)) {
+      body[["thinking"]] <- list(
+        type = "enabled",
+        budget_tokens = thinking
+      )
+    }
 
     # Remove NULL elements from the body
     body <- body[!sapply(body, is.null)]
