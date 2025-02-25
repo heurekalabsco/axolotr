@@ -162,6 +162,16 @@ ask_anthropic <- function(prompt,
       stop("The thinking parameter is only supported for Claude 3.7 Sonnet models.")
     }
 
+    # CHECK: Ensure temperature is set to 1 when thinking is enabled
+    if (temperature != 1) {
+      # Automatically set temperature to 1
+      temperature <- 1
+      message("Setting temperature to 1 as required when thinking is enabled.")
+
+      # Or alternatively, throw an error:
+      # stop("When thinking is enabled, temperature must be set to 1.")
+    }
+
     message("In older Claude models (prior to Claude 3.7 Sonnet), if the sum of prompt tokens and `max_tokens` exceeded the model's context window, the system would automatically adjust `max_tokens` to fit within the context limit. This meant you could set a large `max_tokens` value and the system would silently reduce it as needed.\nWith Claude 3.7 Sonnet, `max_tokens` (which includes your thinking budget when thinking is enabled) is enforced as a strict limit. The system will now return a validation error if prompt tokens + `max_tokens` exceeds the context window size.")
   }
 

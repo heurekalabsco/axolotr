@@ -20,4 +20,27 @@ A character string containing the response from the chosen API.
 }
 \description{
 This function acts as a wrapper to process a prompt using Anthropic, Google, Groq, or OpenAI's API based on the specified model.
+It provides a simplified, unified interface with only the most common parameters that apply to all supported APIs.
+}
+\note{
+For advanced, model-specific features (like Claude's "thinking" capability, OpenAI's function calling,
+      or special document handling), use the model-specific functions directly:
+      \code{ask_anthropic()}, \code{ask_google()}, \code{ask_openai()}, or \code{ask_groq()}.
+}
+\examples{
+\dontrun{
+# Basic usage with default model (Claude)
+response <- ask("What is machine learning?")
+
+# Using a specific API
+response <- ask("Explain quantum computing", model = "openai")
+
+# With system message and specific model
+response <- ask(
+  prompt = "Write a short poem about AI",
+  system = "You are a renowned poet with technical knowledge",
+  model = "gpt-4"
+)
+}
+
 }

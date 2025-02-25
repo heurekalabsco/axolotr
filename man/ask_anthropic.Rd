@@ -2,14 +2,15 @@
 % Please edit documentation in R/fun.R
 \name{ask_anthropic}
 \alias{ask_anthropic}
-\title{Call Anthropic API with Optional Prompt Caching}
+\title{Call Anthropic API with Advanced Features Support}
 \usage{
 ask_anthropic(
   prompt,
   system = NULL,
   model = "claude",
   temperature = 0,
-  max_tokens = 4096,
+  max_tokens = 8192,
+  thinking = NULL,
   pre_fill = NULL,
   pdf_path = NULL,
   cache_system = FALSE,
@@ -23,28 +24,69 @@ ask_anthropic(
 
 \item{system}{An optional character string to provide a system prompt to the model. Default is NULL.}
 
-\item{model}{A character string specifying the model to use.}
+\item{model}{A character string specifying the model to use.
+Can be a generic name (e.g., "claude", "sonnet", "opus", "haiku") or
+a specific model version (e.g., "claude-3-7-sonnet-latest").}
 
 \item{temperature}{A numeric value representing the temperature parameter. Default is 0.}
 
-\item{max_tokens}{An integer specifying the maximum number of tokens in the response. Default is 4096.}
+\item{max_tokens}{An integer specifying the maximum number of tokens in the response. Default is 8192.
+For outputs >64K tokens, requires supporting model and adds appropriate beta header.}
+
+\item{thinking}{An optional numeric value specifying the token budget for Claude's thinking capability.
+Only applicable for Claude 3.7 Sonnet models. Default is NULL.
+When provided, enables Claude's "reasoning mode" with the specified budget.
+Must be less than max_tokens.}
 
 \item{pre_fill}{An optional character string to pre-fill the model's response. Default is NULL.}
 
 \item{pdf_path}{Optional path to a PDF file.}
 
-\item{cache_system}{Logical indicating whether to cache the system prompt. Default is FALSE. This content will be cached for 5 minutes and can be reused across multiple calls.}
+\item{cache_system}{Logical indicating whether to cache the system prompt. Default is FALSE.
+Cached content will be available for 5 minutes and can be reused across multiple calls.}
 
-\item{cache_pdf}{Logical indicating whether to cache the PDF content. Default is FALSE. This content will be cached for 5 minutes and can be reused across multiple calls.}
+\item{cache_pdf}{Logical indicating whether to cache the PDF content. Default is FALSE.
+Cached content will be available for 5 minutes and can be reused across multiple calls.}
 
-\item{dev}{Logical indicating whether to return the full response from the API. Default is FALSE.}
+\item{dev}{Logical indicating whether to return the full API response object. Default is FALSE.}
 
 \item{...}{Additional parameters to pass to the Anthropic API.}
 }
 \value{
 The generated text response from the Claude API, or NULL if an error occurs.
+        If dev=TRUE, returns the complete API response object.
 }
 \description{
 This function sends a prompt to the Claude API by Anthropic and returns the generated text response.
-It supports prompt caching for improved performance when using consistent background context.
+It provides direct access to Claude-specific features including:
+}
+\details{
+1. The "thinking" capability (Claude 3.7 Sonnet models only) for enhanced reasoning
+2. Support for large token outputs (up to 128K tokens with appropriate models)
+3. Prompt caching for improved performance with consistent background context
+4. PDF document handling and integration
+
+Note: The main wrapper function `ask()` does NOT expose Claude-specific parameters like "thinking".
+To use these advanced features, call `ask_anthropic()` directly instead of using the `ask()` wrapper.
+}
+\examples{
+\dontrun{
+# Basic usage
+response <- ask_anthropic("Explain quantum computing")
+
+# With system prompt
+response <- ask_anthropic(
+  prompt = "Write a sonnet about machine learning",
+  system = "You are an expert poet with knowledge of computer science"
+)
+
+# Using thinking capability (Claude 3.7 Sonnet only)
+response <- ask_anthropic(
+  prompt = "Solve this complex math problem step by step...",
+  model = "claude-3-7-sonnet-latest",
+  thinking = 20000,
+  max_tokens = 40000
+)
+}
+
 }
