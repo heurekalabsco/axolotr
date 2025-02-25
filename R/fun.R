@@ -56,7 +56,7 @@ ask_anthropic <- function(prompt,
                           system = NULL,
                           model = "claude",
                           temperature = 0,
-                          max_tokens = 4096,
+                          max_tokens = 8192, #~6.2K words \ 28K unicode characters \ ~12-13 single spaced pages
                           pre_fill = NULL,
                           pdf_path = NULL,
                           cache_system = FALSE,
@@ -70,16 +70,21 @@ ask_anthropic <- function(prompt,
 
   # Define model mapping for generic names
   model_mapping <- list(
-    "claude" = "claude-3-5-sonnet-latest",
-    "anthropic" = "claude-3-5-sonnet-latest",
+    "claude" = "claude-3-7-sonnet-latest",
+    "anthropic" = "claude-3-7-sonnet-latest",
     "haiku" = "claude-3-5-haiku-latest",
-    "sonnet" = "claude-3-5-sonnet-latest",
+    "sonnet" = "claude-3-7-sonnet-latest",
     "opus" = "claude-3-opus-latest"
   )
 
   # Resolve the model name if it's a generic name
   if (model %in% names(model_mapping)) {
     model <- model_mapping[[model]]
+  }
+
+  # Alert user that maximum token limits for claude-3-opus and claude-3-haiku is 4096 and needs to be explicit
+  if (model %in% c("claude-3-opus-latest", "claude-3-haiku-latest") && max_tokens > 4096) {
+    stop("Maximum tokens for claude-3-opus-latest and claude-3-haiku-latest is 4096. Please set max_tokens to 4096 or lower.")
   }
 
   tryCatch({
