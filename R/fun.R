@@ -156,7 +156,16 @@ ask_anthropic <- function(prompt,
     if (thinking >= max_tokens) {
       stop("thinking budget_tokens must be less than max_tokens!")
     }
-
+    
+    if (thinking < 1024) {
+      stop("thinking budget_tokens must at least 1024 tokens!")
+    }
+    
+    if (!is.null(pre_fill)) {
+      pre_fill <- NULL
+      message("Setting pre_fill to NULL as required when thinking is enabled.")
+    }
+    
     # Check if the model supports thinking
     if (!grepl("claude-3-7-sonnet", model)) {
       stop("The thinking parameter is only supported for Claude 3.7 Sonnet models.")
@@ -305,17 +314,26 @@ ask_anthropic <- function(prompt,
     if(dev == TRUE){
       return(result)
     } else {
-      # Extract and return the text
-      if (!is.null(result$content) && length(result$content) > 0 && !is.null(result$content[[1]]$text)) {
-        content <- result$content[[1]]$text
-
-        # Add prefill back to content
-        if(!is.null(pre_fill)){
-          content <- glue::glue("{pre_fill}{content}")
+      if (!is.null(thinking)) {
+        # Extract and return the text when thinking is enabled
+        if (!is.null(result$content) && length(result$content) > 0 && !is.null(result$content[[2]]$text)) {
+          return(result$content[[2]]$text)
+        } else {
+          stop("Unexpected response format from Anthropic API")
         }
-        return(content)
       } else {
-        stop("Unexpected response format from Anthropic API")
+        # Extract and return the text
+        if (!is.null(result$content) && length(result$content) > 0 && !is.null(result$content[[1]]$text)) {
+          content <- result$content[[1]]$text
+          
+          # Add prefill back to content
+          if(!is.null(pre_fill)) {
+            content <- glue::glue("{pre_fill}{content}")
+          }
+          return(content)
+        } else {
+          stop("Unexpected response format from Anthropic API")
+        }
       }
     }
   }, error = function(e) {
