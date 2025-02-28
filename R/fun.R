@@ -163,7 +163,7 @@ ask_anthropic <- function(prompt,
     
     if (!is.null(pre_fill)) {
       pre_fill <- NULL
-      message("Setting pre_fill to NULL as required when thinking is enabled.")
+      if (dev == FALSE) {message("Setting pre_fill to NULL as required when thinking is enabled.")}
     }
     
     # Check if the model supports thinking
@@ -175,7 +175,7 @@ ask_anthropic <- function(prompt,
     if (temperature != 1) {
       # Automatically set temperature to 1
       temperature <- 1
-      message("Setting temperature to 1 as required when thinking is enabled.")
+      if (dev == FALSE) {message("Setting temperature to 1 as required when thinking is enabled.")}
 
       # Or alternatively, throw an error:
       # stop("When thinking is enabled, temperature must be set to 1.")
