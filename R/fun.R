@@ -142,10 +142,15 @@ ask_anthropic <- function(prompt,
     model <- model_mapping[[model]]
   }
 
-  # Alert user that maximum token limits for claude-3-opus and claude-3-haiku is 4096 and needs to be explicit
-  if (model %in% c("claude-3-opus-latest", "claude-3-haiku-latest") && max_tokens > 4096) {
-    stop("Maximum tokens for claude-3-opus-latest and claude-3-haiku-latest is 4096. Please set max_tokens to 4096 or lower.")
+  # Adjust max_tokens based on model constraints
+  if (grepl("claude-3-opus|claude-3-haiku", model) && max_tokens > 4096) {
+    if (dev == FALSE) {message(paste("Reducing max_tokens from", max_tokens, "to 4096 for model", model))}
+    max_tokens <- 4096
+  } else if (grepl("claude-3-5-sonnet", model) && max_tokens > 8192) {
+    if (dev == FALSE) {message(paste("Reducing max_tokens from", max_tokens, "to 8192 for model", model))}
+    max_tokens <- 8192
   }
+  # For claude-3-7-sonnet models, the 64000 default is appropriate
 
   # Validate thinking parameter if provided
   if (!is.null(thinking)) {
