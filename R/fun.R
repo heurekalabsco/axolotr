@@ -115,7 +115,7 @@ ask_anthropic <- function(prompt,
                           system = NULL,
                           model = "claude",
                           temperature = 0,
-                          max_tokens = 8192, #~6.2K words \ 28K unicode characters \ ~12-13 single spaced pages
+                          max_tokens = 8192,
                           thinking = NULL,
                           pre_fill = NULL,
                           pdf_path = NULL,
@@ -142,10 +142,15 @@ ask_anthropic <- function(prompt,
     model <- model_mapping[[model]]
   }
 
-  # Alert user that maximum token limits for claude-3-opus and claude-3-haiku is 4096 and needs to be explicit
-  if (model %in% c("claude-3-opus-latest", "claude-3-haiku-latest") && max_tokens > 4096) {
-    stop("Maximum tokens for claude-3-opus-latest and claude-3-haiku-latest is 4096. Please set max_tokens to 4096 or lower.")
+  # Adjust max_tokens based on model constraints
+  if (grepl("claude-3-opus|claude-3-haiku", model) && max_tokens > 4096) {
+    if (dev == FALSE) {message(paste("Reducing max_tokens from", max_tokens, "to 4096 for model", model))}
+    max_tokens <- 4096
+  } else if (grepl("claude-3-5-sonnet|claude-3-5-haiku", model) && max_tokens > 8192) {
+    if (dev == FALSE) {message(paste("Reducing max_tokens from", max_tokens, "to 8192 for model", model))}
+    max_tokens <- 8192
   }
+  # For claude-3-7-sonnet models, the 64000 default is appropriate
 
   # Validate thinking parameter if provided
   if (!is.null(thinking)) {
@@ -156,16 +161,16 @@ ask_anthropic <- function(prompt,
     if (thinking >= max_tokens) {
       stop("thinking budget_tokens must be less than max_tokens!")
     }
-    
+
     if (thinking < 1024) {
       stop("thinking budget_tokens must at least 1024 tokens!")
     }
-    
+
     if (!is.null(pre_fill)) {
       pre_fill <- NULL
       if (dev == FALSE) {message("Setting pre_fill to NULL as required when thinking is enabled.")}
     }
-    
+
     # Check if the model supports thinking
     if (!grepl("claude-3-7-sonnet", model)) {
       stop("The thinking parameter is only supported for Claude 3.7 Sonnet models.")
@@ -180,7 +185,7 @@ ask_anthropic <- function(prompt,
       # Or alternatively, throw an error:
       # stop("When thinking is enabled, temperature must be set to 1.")
     }
-    
+
     if (dev == FALSE) {
       message("In older Claude models (prior to Claude 3.7 Sonnet), if the sum of prompt tokens and `max_tokens` exceeded the model's context window, the system would automatically adjust `max_tokens` to fit within the context limit. This meant you could set a large `max_tokens` value and the system would silently reduce it as needed.\nWith Claude 3.7 Sonnet, `max_tokens` (which includes your thinking budget when thinking is enabled) is enforced as a strict limit. The system will now return a validation error if prompt tokens + `max_tokens` exceeds the context window size.")
     }
@@ -294,15 +299,43 @@ ask_anthropic <- function(prompt,
     # Remove NULL elements from the body
     body <- body[!sapply(body, is.null)]
 
-    # Make the API call
-    response <- httr::POST(url = url, config = headers, body = jsonlite::toJSON(body, auto_unbox = TRUE))
+    # Convert body to JSON once outside the retry loop
+    body_json <- jsonlite::toJSON(body, auto_unbox = TRUE)
 
-    # Check for HTTP errors
+    # Retry logic with exponential backoff
+    max_retries <- 3
+    retry_count <- 0
+    retry_delay <- 1  # Initial delay in seconds
+    
+    while (TRUE) {
+      # Make the API call
+      response <- httr::POST(url = url, config = headers, body = body_json)
+        
+      # Get status code
+      status_code <- httr::status_code(response)
+        
+      # Check if we need to retry (502 Bad Gateway, 529 Overloaded, or other server errors)
+      if ((status_code >= 500) && retry_count < max_retries) {
+        retry_count <- retry_count + 1
+        message(sprintf("Received status code %d. Retrying (%d/%d) after %d seconds...",
+                        status_code, retry_count, max_retries, retry_delay))
+        
+        # Sleep with exponential backoff
+        Sys.sleep(retry_delay)
+        # Increase delay for next retry (exponential backoff)
+        retry_delay <- retry_delay * 2
+        # Continue to next iteration of the loop
+        next
+      }
+      
+      # Either success or we've exhausted retries, so break out of the loop
+      break
+    }
+
+    # Check for HTTP errors (after all retries are exhausted)
     if (httr::http_error(response)) {
       http_status <- httr::http_status(response)
-      stop(
-        sprintf(http_status$message)
-      )
+      stop(sprintf(http_status$message))
     }
 
     # Parse the response
@@ -327,7 +360,7 @@ ask_anthropic <- function(prompt,
         # Extract and return the text
         if (!is.null(result$content) && length(result$content) > 0 && !is.null(result$content[[1]]$text)) {
           content <- result$content[[1]]$text
-          
+
           # Add prefill back to content
           if(!is.null(pre_fill)) {
             content <- glue::glue("{pre_fill}{content}")
