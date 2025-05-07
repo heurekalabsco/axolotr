@@ -146,7 +146,7 @@ ask_anthropic <- function(prompt,
   if (grepl("claude-3-opus|claude-3-haiku", model) && max_tokens > 4096) {
     if (dev == FALSE) {message(paste("Reducing max_tokens from", max_tokens, "to 4096 for model", model))}
     max_tokens <- 4096
-  } else if (grepl("claude-3-5-sonnet", model) && max_tokens > 8192) {
+  } else if (grepl("claude-3-5-sonnet|claude-3-5-haiku", model) && max_tokens > 8192) {
     if (dev == FALSE) {message(paste("Reducing max_tokens from", max_tokens, "to 8192 for model", model))}
     max_tokens <- 8192
   }
@@ -306,32 +306,28 @@ ask_anthropic <- function(prompt,
     max_retries <- 3
     retry_count <- 0
     retry_delay <- 1  # Initial delay in seconds
-
+    
     while (TRUE) {
       # Make the API call
       response <- httr::POST(url = url, config = headers, body = body_json)
-
+        
       # Get status code
       status_code <- httr::status_code(response)
-
-      # Check if we need to retry (502 Bad Gateway or 529 Overloaded)
-      if ((status_code == 502 || status_code == 529) && retry_count < max_retries) {
+        
+      # Check if we need to retry (502 Bad Gateway, 529 Overloaded, or other server errors)
+      if ((status_code >= 500) && retry_count < max_retries) {
         retry_count <- retry_count + 1
-        if (dev == FALSE) {
-          message(sprintf("Received status code %d. Retrying (%d/%d) after %d seconds...",
-                          status_code, retry_count, max_retries, retry_delay))
-        }
-
+        message(sprintf("Received status code %d. Retrying (%d/%d) after %d seconds...",
+                        status_code, retry_count, max_retries, retry_delay))
+        
         # Sleep with exponential backoff
         Sys.sleep(retry_delay)
-
         # Increase delay for next retry (exponential backoff)
         retry_delay <- retry_delay * 2
-
         # Continue to next iteration of the loop
         next
       }
-
+      
       # Either success or we've exhausted retries, so break out of the loop
       break
     }
