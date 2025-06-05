@@ -55,7 +55,7 @@ ask <- function(prompt,
 #' This function sends a prompt to the Claude API by Anthropic and returns the generated text response.
 #' It provides direct access to Claude-specific features including:
 #'
-#' 1. The "thinking" capability (Claude 3.7 Sonnet models only) for enhanced reasoning
+#' 1. The "thinking" capability (Claude 3.7 Sonnet and newer models) for enhanced reasoning
 #' 2. Support for large token outputs (up to 128K tokens with appropriate models)
 #' 3. Prompt caching for improved performance with consistent background context
 #' 4. PDF document handling and integration
@@ -72,11 +72,11 @@ ask <- function(prompt,
 #' @param max_tokens An integer specifying the maximum number of tokens in the response. Default is 8192.
 #'                   For outputs >64K tokens, requires supporting model and adds appropriate beta header.
 #' @param thinking An optional numeric value specifying the token budget for Claude's thinking capability.
-#'                 Only applicable for Claude 3.7 Sonnet models. Default is NULL.
+#'                 Only applicable for Claude 3.7 Sonnet and newer models (Sonnet 4, Opus 4). Default is NULL.
 #'                 When provided, enables Claude's "reasoning mode" with the specified budget.
 #'                 Must be less than max_tokens.
 #' @param pre_fill An optional character string to pre-fill the model's response. Default is NULL.
-#' @param pdf_path Optional path to a PDF file.
+#' @param pdf_path Optional path(s) to PDF file(s). Can be a single path or vector of paths.
 #' @param cache_system Logical indicating whether to cache the system prompt. Default is FALSE.
 #'                     Cached content will be available for 5 minutes and can be reused across multiple calls.
 #' @param cache_pdf Logical indicating whether to cache the PDF content. Default is FALSE.
@@ -101,12 +101,18 @@ ask <- function(prompt,
 #'   system = "You are an expert poet with knowledge of computer science"
 #' )
 #'
-#' # Using thinking capability (Claude 3.7 Sonnet only)
+#' # Using thinking capability (Claude 3.7 Sonnet and newer models)
 #' response <- ask_anthropic(
 #'   prompt = "Solve this complex math problem step by step...",
-#'   model = "claude-3-7-sonnet-latest",
+#'   model = "claude-sonnet-4-20250514",
 #'   thinking = 20000,
 #'   max_tokens = 40000
+#' )
+#'
+#' # With multiple PDFs
+#' response <- ask_anthropic(
+#'   prompt = "Compare the content of these documents",
+#'   pdf_path = c("document1.pdf", "document2.pdf", "document3.pdf")
 #' )
 #' }
 #'
@@ -172,8 +178,8 @@ ask_anthropic <- function(prompt,
     }
 
     # Check if the model supports thinking
-    if (!grepl("claude-3-7-sonnet", model)) {
-      stop("The thinking parameter is only supported for Claude 3.7 Sonnet models.")
+    if (!grepl("claude-3-7-sonnet|claude-sonnet-4|claude-opus-4", model)) {
+      stop("The thinking parameter is only supported for Claude 3.7 Sonnet and newer models.")
     }
 
     # CHECK: Ensure temperature is set to 1 when thinking is enabled
@@ -245,17 +251,25 @@ ask_anthropic <- function(prompt,
       }
     }
 
-    # Add PDF if provided
+    # Add PDFs if provided
     if (!is.null(pdf_path)) {
-      pdf_data <- encode_pdf(pdf_path)
-      pdf_block <- create_pdf_block(pdf_data, cache = cache_pdf)
-
-      # Create content blocks
-      prompt <- list(
-        pdf_block,
+      pdf_blocks <- list()
+      
+      # Handle multiple PDFs by iterating through paths
+      for (path in pdf_path) {
+        pdf_data <- encode_pdf(path)
+        pdf_block <- create_pdf_block(pdf_data, cache = cache_pdf)
+        pdf_blocks <- c(pdf_blocks, list(pdf_block))
+      }
+      
+      # Create content blocks with all PDF blocks followed by text
+      prompt <- c(
+        pdf_blocks,
         list(
-          type = "text",
-          text = prompt
+          list(
+            type = "text",
+            text = prompt
+          )
         )
       )
     }
