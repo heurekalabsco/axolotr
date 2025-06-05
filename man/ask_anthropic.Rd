@@ -34,13 +34,13 @@ a specific model version (e.g., "claude-3-7-sonnet-latest").}
 For outputs >64K tokens, requires supporting model and adds appropriate beta header.}
 
 \item{thinking}{An optional numeric value specifying the token budget for Claude's thinking capability.
-Only applicable for Claude 3.7 Sonnet models. Default is NULL.
+Only applicable for Claude 3.7 Sonnet and newer models (Sonnet 4, Opus 4). Default is NULL.
 When provided, enables Claude's "reasoning mode" with the specified budget.
 Must be less than max_tokens.}
 
 \item{pre_fill}{An optional character string to pre-fill the model's response. Default is NULL.}
 
-\item{pdf_path}{Optional path to a PDF file.}
+\item{pdf_path}{Optional path(s) to PDF file(s). Can be a single path or vector of paths.}
 
 \item{cache_system}{Logical indicating whether to cache the system prompt. Default is FALSE.
 Cached content will be available for 5 minutes and can be reused across multiple calls.}
@@ -61,7 +61,7 @@ This function sends a prompt to the Claude API by Anthropic and returns the gene
 It provides direct access to Claude-specific features including:
 }
 \details{
-1. The "thinking" capability (Claude 3.7 Sonnet models only) for enhanced reasoning
+1. The "thinking" capability (Claude 3.7 Sonnet and newer models) for enhanced reasoning
 2. Support for large token outputs (up to 128K tokens with appropriate models)
 3. Prompt caching for improved performance with consistent background context
 4. PDF document handling and integration
@@ -80,12 +80,18 @@ response <- ask_anthropic(
   system = "You are an expert poet with knowledge of computer science"
 )
 
-# Using thinking capability (Claude 3.7 Sonnet only)
+# Using thinking capability (Claude 3.7 Sonnet and newer models)
 response <- ask_anthropic(
   prompt = "Solve this complex math problem step by step...",
-  model = "claude-3-7-sonnet-latest",
+  model = "claude-sonnet-4-20250514",
   thinking = 20000,
   max_tokens = 40000
+)
+
+# With multiple PDFs
+response <- ask_anthropic(
+  prompt = "Compare the content of these documents",
+  pdf_path = c("document1.pdf", "document2.pdf", "document3.pdf")
 )
 }
 
